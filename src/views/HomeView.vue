@@ -8,12 +8,12 @@
     </v-row>
     <br />
     <v-row>
-      <v-data-table :headers="headers"> </v-data-table>
+      <v-data-table :headers="headers" :items="listaJuguetes"> </v-data-table>
     </v-row>
     <v-dialog :value="isActive" width="500" persistent>
       <v-card maxwidth="500" width="500">
         <v-toolbar color="primary" dark> Agregar nuevo Juguete </v-toolbar>
-        <v-text>
+        <v-card-text>
           <v-form v-model="formIsValid">
             <v-container fluid pa-10>
               <v-row>
@@ -64,7 +64,7 @@
               </v-row>
             </v-container>
           </v-form>
-        </v-text>
+        </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="green" @click="Guardar" :disabled="!formIsValid"
@@ -78,11 +78,18 @@
 </template>
 
 <script>
+import JuguetesAPI from "../api/JuguetesAPI";
 export default {
   name: "HomeView",
 
+  created() {
+    JuguetesAPI.Obtener().then((res) => {
+      console.log(res);
+      this.listaJuguetes = res.data;
+    });
+  },
   data: () => ({
-    isActive: true,
+    isActive: false,
     nombre: "",
     precio: "",
     compania: "",
@@ -103,27 +110,28 @@ export default {
     ],
     rulesDescripcion: [
       (v) => !!v || "El capo es requerido",
-      (v) => (v.length > 0 && v.length < 100) || "El limite de caracteres es 100",
+      (v) =>
+        (v.length > 0 && v.length < 100) || "El limite de caracteres es 100",
     ],
     headers: [
       {
-        value: "Id",
+        value: "id",
         text: "Id",
       },
       {
-        value: "Nombre",
+        value: "nombre",
         text: "Nombre",
       },
       {
-        value: "Edad",
+        value: "restriccionEdad",
         text: "Edad",
       },
       {
-        value: "Precio",
+        value: "precio",
         text: "Precio",
       },
       {
-        value: "Compañia",
+        value: "compañia",
         text: "Compañia",
       },
       {
@@ -131,6 +139,7 @@ export default {
         text: "",
       },
     ],
+    listaJuguetes: [],
   }),
   methods: {
     Guardar() {
