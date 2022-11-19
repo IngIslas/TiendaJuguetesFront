@@ -3,18 +3,31 @@
   <v-container>
     <v-row>
       <v-col>
-        <v-btn color="green" @click="isActive = true">Agregar Nuevo</v-btn>
+        <v-btn color="primary" @click="(isActive = true), (accion = 'Nuevo')"
+          >Agregar Nuevo</v-btn
+        >
       </v-col>
     </v-row>
     <br />
     <v-row>
-      <v-data-table :headers="headers" :items="listaJuguetes"> </v-data-table>
+      <v-data-table :headers="headers" :items="listaJuguetes">
+        <template v-slot:item.actions="{ item }">
+          <div>
+            <v-row>
+              <v-col>
+                <v-btn @click="AbrirModal(item)"> Editar </v-btn>
+              </v-col>
+              <v-col> <v-btn @click="Eliminar(item)"> Eliminar </v-btn> </v-col>
+            </v-row>
+          </div>
+        </template>
+      </v-data-table>
     </v-row>
     <v-dialog :value="isActive" width="500" persistent>
-      <v-card maxwidth="500" width="500">
+      <v-card maxWidth="500" width="500">
         <v-toolbar color="primary" dark> Agregar nuevo Juguete </v-toolbar>
         <v-card-text>
-          <v-form v-model="formIsValid">
+          <v-form v-model="formIsValid" ref="form">
             <v-container fluid pa-10>
               <v-row>
                 <v-col>
@@ -67,13 +80,17 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="green" @click="Guardar" :disabled="!formIsValid"
+          <v-btn color="green" @click="Guardar" :disabled="!ValidarForm"
             >Guardar</v-btn
           >
-          <v-btn color="error" @click="isActive = false">Cancelar</v-btn>
+          <v-btn color="error" @click="CerrarModal">Cancelar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-alert type="success" v-model="showSuccessAlert">Exito</v-alert>
+    <v-alert type="error" v-model="showErrorAlert"
+      >Error al realizar la acción: {{ this.error }}</v-alert
+    >
   </v-container>
 </template>
 
@@ -83,19 +100,22 @@ export default {
   name: "HomeView",
 
   created() {
-    JuguetesAPI.Obtener().then((res) => {
-      console.log(res);
-      this.listaJuguetes = res.data;
-    });
+    this.ObtenerJuguetes();
   },
   data: () => ({
     isActive: false,
+    id: null,
     nombre: "",
-    precio: "",
+    precio: null,
     compania: "",
-    edadMaxima: "",
+    edadMaxima: null,
     descripcion: "",
+    accion: "",
+    item: {},
+    error: "",
     formIsValid: false,
+    showSuccessAlert: false,
+    showErrorAlert: false,
     rulesNombre_Compania: [
       (v) => !!v || "El capo es requerido",
       (v) => (v.length > 0 && v.length < 50) || "El limite de caracteres es 50",
@@ -142,8 +162,104 @@ export default {
     listaJuguetes: [],
   }),
   methods: {
+    AbrirModal(juguete) {
+      this.item = {
+        nombre: juguete.nombre,
+        edadMaxima: juguete.restriccionEdad,
+        precio: juguete.precio,
+        compania: juguete.compañia,
+        descripcion: juguete.descripcion,
+      };
+      this.isActive = true;
+      console.log(juguete);
+      this.id = juguete.id;
+      this.accion = "Editar";
+      this.nombre = juguete.nombre;
+      this.edadMaxima = juguete.restriccionEdad;
+      this.precio = juguete.precio;
+      this.compania = juguete.compañia;
+      this.descripcion = juguete.descripcion;
+    },
     Guardar() {
+      var juguete = {
+        Id: this.id,
+        Nombre: this.nombre,
+        Descripcion: this.descripcion,
+        RestriccionEdad: parseInt(this.edadMaxima),
+        Compañia: this.compania,
+        Precio: parseInt(this.precio),
+      };
+      if (this.accion == "Nuevo") this.Insertar(juguete);
+      else this.Actualizar(juguete);
+    },
+    Insertar(juguete) {
+      JuguetesAPI.Insertar(juguete)
+        .then((res) => {
+          this.cerrarModal();
+          this.ObtenerJuguetes();
+          this.MostrarSuccesAlert();
+        })
+        .catch((err) => {
+          this.error = error;
+          this.cerrarModal();
+          this.MostrarErrorAlert();
+        });
+    },
+    Actualizar(juguete) {
+      JuguetesAPI.Actualizar(juguete)
+        .then((res) => {
+          this.cerrarModal();
+          this.MostrarSuccesAlert();
+          this.ObtenerJuguetes();
+        })
+        .catch((err) => {
+          this.errors = err;
+          this.cerrarModal();
+          this.MostrarErrorAlert();
+        });
+    },
+    ObtenerJuguetes() {
+      JuguetesAPI.Obtener().then((res) => {
+        this.listaJuguetes = res.data;
+      });
+    },
+    MostrarSuccesAlert() {
+      this.showSuccessAlert = true;
+      setTimeout(() => {
+        this.showSuccessAlert = false;
+      }, 2500);
+    },
+    MostrarErrorAlert() {
+      this.showErrorAlert = true;
+      setTimeout(() => {
+        this.showErrorAlert = false;
+      }, 2500);
+    },
+    CerrarModal() {
+      this.nombre = "";
+      this.edadMaxima = null;
+      this.precio = null;
+      this.compania = "";
+      this.descripcion = "";
+      this.item = {};
+      this.$refs.form.resetValidation();
       this.isActive = false;
+    },
+  },
+  computed: {
+    ValidarForm() {
+      if (this.formIsValid) {
+        if (
+          this.item.nombre == this.nombre &&
+          this.item.precio == this.precio &&
+          this.item.edadMaxima == this.edadMaxima &&
+          this.item.compania == this.compania &&
+          this.item.descripcion == this.descripcion
+        ) {
+          return false;
+        }
+        return true;
+      }
     },
   },
 };
