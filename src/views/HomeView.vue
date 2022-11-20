@@ -195,26 +195,26 @@ export default {
     Insertar(juguete) {
       JuguetesAPI.Insertar(juguete)
         .then((res) => {
-          this.cerrarModal();
+          this.CerrarModal();
           this.ObtenerJuguetes();
           this.MostrarSuccesAlert();
         })
         .catch((err) => {
           this.error = error;
-          this.cerrarModal();
+          this.CerrarModal();
           this.MostrarErrorAlert();
         });
     },
     Actualizar(juguete) {
       JuguetesAPI.Actualizar(juguete)
         .then((res) => {
-          this.cerrarModal();
+          this.CerrarModal();
           this.MostrarSuccesAlert();
           this.ObtenerJuguetes();
         })
         .catch((err) => {
           this.errors = err;
-          this.cerrarModal();
+          this.CerrarModal();
           this.MostrarErrorAlert();
         });
     },
