@@ -16,6 +16,10 @@ class JuguetesAPI {
       params
     );
   }
+
+  static async Eliminar(Id) {
+    return await axios.delete(this.baseUrl + "EliminarJuguete/" + Id);
+  }
 }
 
 export default JuguetesAPI;

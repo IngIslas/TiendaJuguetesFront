@@ -172,7 +172,7 @@ export default {
       };
       this.isActive = true;
       console.log(juguete);
-      this.id = juguete.id;
+      this.id = juguete.id??0;
       this.accion = "Editar";
       this.nombre = juguete.nombre;
       this.edadMaxima = juguete.restriccionEdad;
@@ -182,7 +182,7 @@ export default {
     },
     Guardar() {
       var juguete = {
-        Id: this.id,
+        Id: this.id??0,
         Nombre: this.nombre,
         Descripcion: this.descripcion,
         RestriccionEdad: parseInt(this.edadMaxima),
@@ -215,6 +215,17 @@ export default {
         .catch((err) => {
           this.errors = err;
           this.CerrarModal();
+          this.MostrarErrorAlert();
+        });
+    },
+    Eliminar(juguete) {
+      JuguetesAPI.Eliminar(juguete.id)
+        .then((res) => {
+          this.MostrarSuccesAlert();
+          this.ObtenerJuguetes();
+        })
+        .catch((err) => {
+          this.errors = err;
           this.MostrarErrorAlert();
         });
     },
