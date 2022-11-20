@@ -17,7 +17,11 @@
               <v-col>
                 <v-btn @click="AbrirModal(item)"> Editar </v-btn>
               </v-col>
-              <v-col> <v-btn @click="Eliminar(item)"> Eliminar </v-btn> </v-col>
+              <v-col>
+                <v-btn @click="(showConfirm = true), (itemToDelete = item)">
+                  Eliminar
+                </v-btn>
+              </v-col>
             </v-row>
           </div>
         </template>
@@ -91,6 +95,26 @@
     <v-alert type="error" v-model="showErrorAlert"
       >Error al realizar la acción: {{ this.error }}</v-alert
     >
+    <v-dialog v-model="showConfirm" width="500">
+      <v-card justify="center">
+        <v-toolbar color="primary" dark>
+          Estas seguro que deseas eliminar el elemento?
+        </v-toolbar>
+        <br />
+        <v-card-text>
+          <v-row>
+            <v-col>
+              <v-btn color="error" @click="showConfirm = false">
+                Cancelar
+              </v-btn>
+            </v-col>
+            <v-col>
+              <v-btn color="success" @click="Eliminar">Confirmar</v-btn>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -112,7 +136,9 @@ export default {
     descripcion: "",
     accion: "",
     item: {},
+    itemToDelete: {},
     error: "",
+    showConfirm: false,
     formIsValid: false,
     showSuccessAlert: false,
     showErrorAlert: false,
@@ -172,7 +198,7 @@ export default {
       };
       this.isActive = true;
       console.log(juguete);
-      this.id = juguete.id??0;
+      this.id = juguete.id ?? 0;
       this.accion = "Editar";
       this.nombre = juguete.nombre;
       this.edadMaxima = juguete.restriccionEdad;
@@ -182,7 +208,7 @@ export default {
     },
     Guardar() {
       var juguete = {
-        Id: this.id??0,
+        Id: this.id ?? 0,
         Nombre: this.nombre,
         Descripcion: this.descripcion,
         RestriccionEdad: parseInt(this.edadMaxima),
@@ -218,13 +244,15 @@ export default {
           this.MostrarErrorAlert();
         });
     },
-    Eliminar(juguete) {
-      JuguetesAPI.Eliminar(juguete.id)
+    Eliminar() {
+      JuguetesAPI.Eliminar(this.itemToDelete.id)
         .then((res) => {
           this.MostrarSuccesAlert();
           this.ObtenerJuguetes();
+          this.showConfirm = false;
         })
         .catch((err) => {
+          this.showConfirm = false;
           this.errors = err;
           this.MostrarErrorAlert();
         });
